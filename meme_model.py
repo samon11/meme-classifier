@@ -97,12 +97,7 @@ val_generator = test_datagen.flow_from_directory(
 
 
 # [0,1]=meme and [1,0]=lame
-def get_image():
-    x,y = val_generator.next()
-    i = random.randint(0,50)
-    image = x[i]
-    label = y[i]
-    return image, label
+
 
 
 from keras import layers, models
@@ -151,6 +146,50 @@ def img_model():
 #    val_loss = history.history['val_loss']
 
     
+def inception():
+    from keras.applications import inception_resnet_v2
+    base = inception_resnet_v2.InceptionResNetV2(include_top=False, input_shape=(150,150,3), pooling='max')
+    model = models.Sequential()
+    model.add(base)
+    model.add(layers.Dense(700, activation='tanh'))
+    model.add(layers.Dense(1, activation='sigmoid'))
+    
+    model.summary()
+    
+        
+    model.compile(loss="binary_crossentropy", 
+                  optimizer=keras.optimizers.Adam(lr=0.003),
+                  metrics=['acc']
+                  )
+    
+    callbacks = [
+        keras.callbacks.EarlyStopping(
+                monitor='val_loss',
+                patience=3),
+        keras.callbacks.ModelCheckpoint('./chollet_crap.h5',
+                                        monitor='val_acc'),
+        keras.callbacks.TensorBoard(
+                histogram_freq=0)
+                ]
+    
+    model.fit_generator(
+      train_generator,
+      steps_per_epoch=100,
+      epochs=epochs,
+      validation_data=val_generator,
+      validation_steps=50,
+      callbacks=callbacks)
+    
+    
+  
+    
+def get_image():
+    x,y = val_generator.next()
+    i = random.randint(0,50)
+    image = x[i]
+    label = y[i]
+    return image, label
+
 
 def predict_meme(model, path=None):
     pred = list()
