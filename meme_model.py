@@ -15,14 +15,14 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from skimage.transform import resize
-
+import datetime
 
 
 
 
 basedir = "/Users/user/Desktop/Keras/MemeFinder/"
-meme_src = os.path.join(basedir, "memes_orig/")
-lame_src = os.path.join(basedir, "lames_orig/")
+#meme_src = os.path.join(basedir, "memes_orig/")
+#lame_src = os.path.join(basedir, "lames_orig/")
 
 train_dir = os.path.join(basedir, "train/")
 test_dir = os.path.join(basedir, "test/")
@@ -30,13 +30,13 @@ val_dir = os.path.join(basedir, "validation/")
 
 
 # seperate meme images into proper folders
-meme_fnames = os.listdir(basedir+"memes_orig/")
-lame_fnames = os.listdir(basedir+"lames_orig/")[0:3327]
+#meme_fnames = os.listdir(basedir+"memes_orig/")
+#lame_fnames = os.listdir(basedir+"lames_orig/")[0:3327]
 
 
 
 
-# one time copy 
+# one time initial setup 
 #for fname in lame_fnames:
 #    src = lame_src + fname
 #    dst = os.path.join(basedir, "lames_orig/", fname)
@@ -76,10 +76,10 @@ def copy_files():
         shutil.copyfile(src, dst)
 
 
-
-# read in meme png and jpg images
+# read in meme images 
 train_datagen = ImageDataGenerator(rescale=1./255)
 test_datagen = ImageDataGenerator(rescale=1./255)
+val_datagen = ImageDataGenerator(rescale=1./255)
 
 train_generator = train_datagen.flow_from_directory(
         train_dir,
@@ -88,20 +88,27 @@ train_generator = train_datagen.flow_from_directory(
         class_mode='binary'
         )
 
-val_generator = test_datagen.flow_from_directory(
+val_generator = val_datagen.flow_from_directory(
         val_dir,
         target_size=(150,150),
         batch_size=50,
         class_mode='binary'
         )
 
+test_generator = test_datagen.flow_from_directory(
+        test_dir,
+        target_size=(150,150),
+        batch_size=50,
+        class_mode='binary'
+        )
 
-# [0,1]=meme and [1,0]=lame
+
 
 
 
 from keras import layers, models
 epochs = 1
+
 def img_model():
     model = models.Sequential()
     model.add(layers.Conv2D(32, (5, 5), activation='relu',
@@ -128,7 +135,7 @@ def img_model():
         keras.callbacks.EarlyStopping(
                 monitor='loss',
                 patience=3),
-        keras.callbacks.ModelCheckpoint('./chollet_crap.h5',
+        keras.callbacks.ModelCheckpoint('./' + str(datetime.datetime.now()),
                                         monitor='val_acc'),
         keras.callbacks.TensorBoard(
                 histogram_freq=0)
@@ -191,6 +198,8 @@ def get_image():
     return image, label
 
 
+
+# model = keras.models.load_model("chollet.h5")
 def predict_meme(model, path=None):
     pred = list()
     
